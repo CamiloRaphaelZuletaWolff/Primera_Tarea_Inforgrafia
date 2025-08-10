@@ -12,5 +12,4 @@ Este repositorio contiene el código desarrollado para la tarea asignada en clas
 ├── character.py         # Clase Character utilizada en la tarea
 ├── InterfazGrafica/     # Carpeta extra con versión GUI del juego
 │   ├── gui_game.py
-│   └── (otros archivos necesarios)
 └── README.md
