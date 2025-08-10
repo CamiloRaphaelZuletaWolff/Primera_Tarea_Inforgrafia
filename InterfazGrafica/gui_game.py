@@ -2,9 +2,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
 import random
 
-# ------------------------------
-# Lógica del personaje (sin herencia)
-# ------------------------------
 class Character:
     def __init__(self, nombre: str, role: str, hp: int, base_damage: int, parry_prob: float, crit_prob: float):
         self.nombre = nombre
@@ -15,7 +12,6 @@ class Character:
         self.parry_prob = parry_prob
         self.crit_prob = crit_prob
 
-        # modificadores temporales
         self.damage_bonus = 0
         self.damage_multiplier = 1.0
         self.defense_multiplier = 1.0
@@ -97,7 +93,6 @@ class Character:
             log_fn("No quedan usos de esa habilidad.")
             return False
 
-        # ROGUE
         if skill_name == "Backstab":
             target = targets[0]
             damage = (self.base_damage + self.damage_bonus) * 3
@@ -113,7 +108,6 @@ class Character:
             log_fn(f"{self.nombre} activa SHADOWDANCE: +parry por {duration} turnos.")
             return True
 
-        # TANQUE
         if skill_name == "ShieldWall":
             duration = skill.get("duration", 2)
             uses_left = skill.get("uses", 0)
@@ -138,7 +132,6 @@ class Character:
             log_fn(f"{self.nombre} usa REPAIRARMOR y cura {heal} HP. HP ahora: {self.hp}. (Usos restantes: {skill['uses']})")
             return True
 
-        # WIZARD
         if skill_name == "Meteor":
             uses_left = skill.get("uses", 0)
             if uses_left <= 0:
@@ -162,7 +155,6 @@ class Character:
             log_fn(f"{self.nombre} activa ARCANESURGE: +crit por {duration} turnos.")
             return True
 
-        # PALADIN
         if skill_name == "HolyStrike":
             uses_left = skill.get("uses", 1)
             if uses_left <= 0:
@@ -252,9 +244,6 @@ class Character:
             lines.append(f"{k} - {v.get('desc','')} (usos: {uses}, dur: {dur})")
         return "\n".join(lines)
 
-# ------------------------------
-# Interfaz gráfica
-# ------------------------------
 class GameGUI:
     def __init__(self, root):
         self.root = root
@@ -265,7 +254,6 @@ class GameGUI:
 
         self._build_setup_frame()
 
-    # ---------- SETUP ----------
     def _build_setup_frame(self):
         self.setup_frame = ttk.Frame(self.root, padding=12)
         self.setup_frame.grid(row=0, column=0, sticky="nsew")
@@ -303,7 +291,7 @@ class GameGUI:
         role = self._choose_role_dialog()
         if not role:
             return
-        # crear personaje con stats según rol
+
         char = self._crear_personaje(name, role)
         self.players.append(char)
         self.lb_players.insert(tk.END, char.describe() )
@@ -349,7 +337,6 @@ class GameGUI:
         if role == "paladin":
             return Character(nombre, role, hp=200, base_damage=5, parry_prob=0.5, crit_prob=0.1)
 
-    # ---------- START GAME ----------
     def _start_game(self):
         try:
             t = int(self.spin_turns.get())
@@ -364,37 +351,34 @@ class GameGUI:
             messagebox.showerror("Error", "Necesitas entre 2 y 4 jugadores.")
             return
 
-        # ocultar setup y mostrar interfaz de juego
         self.setup_frame.destroy()
         self._build_game_frame()
 
-    # ---------- GAME UI ----------
     def _build_game_frame(self):
         self.game_frame = ttk.Frame(self.root, padding=8)
         self.game_frame.grid(row=0, column=0, sticky="nsew")
 
-        # estado superior
         self.lbl_turn = ttk.Label(self.game_frame, text=f"Turno: 1 / {self.num_turns}", font=("Helvetica", 12, "bold"))
         self.lbl_turn.grid(column=0, row=0, sticky="w")
 
         self.lbl_current = ttk.Label(self.game_frame, text="Jugador actual: -", font=("Helvetica", 11))
         self.lbl_current.grid(column=1, row=0, sticky="w", padx=10)
 
-        # panel de jugadores
+
         self.frame_status = ttk.Frame(self.game_frame, borderwidth=1, relief="solid", padding=8)
         self.frame_status.grid(column=0, row=1, rowspan=2, sticky="nsew", padx=(0,8))
         ttk.Label(self.frame_status, text="Jugadores:").grid(column=0, row=0, sticky="w")
         self.lb_status = tk.Listbox(self.frame_status, width=40, height=10)
         self.lb_status.grid(column=0, row=1, pady=6)
 
-        # log de acciones
+
         self.frame_log = ttk.Frame(self.game_frame, borderwidth=1, relief="solid", padding=8)
         self.frame_log.grid(column=1, row=1, sticky="nsew")
         ttk.Label(self.frame_log, text="Registro de juego:").grid(column=0, row=0, sticky="w")
         self.txt_log = tk.Text(self.frame_log, width=60, height=12, state="disabled", wrap="word")
         self.txt_log.grid(column=0, row=1, pady=6)
 
-        # controles
+
         self.frame_controls = ttk.Frame(self.game_frame, padding=6)
         self.frame_controls.grid(column=0, row=3, columnspan=2, sticky="ew", pady=(8,0))
         self.btn_attack = ttk.Button(self.frame_controls, text="Atacar", command=self._action_attack)
@@ -404,7 +388,7 @@ class GameGUI:
         self.btn_pass = ttk.Button(self.frame_controls, text="Pasar", command=self._action_pass)
         self.btn_pass.grid(column=2, row=0, padx=6)
 
-        # init state
+
         self.turn_index = 1
         self._refresh_status()
         self._next_turn()
@@ -436,10 +420,8 @@ class GameGUI:
             return []
 
         if multiple:
-            # retornar todos
             return [p for p in choices if p is not self.current_player]
 
-        # ventana de selección simple
         dlg = tk.Toplevel(self.root)
         dlg.title("Elegir objetivo")
         dlg.transient(self.root)
@@ -463,7 +445,6 @@ class GameGUI:
         return [result["sel"]] if result["sel"] else []
 
     def _next_turn(self):
-        # comprobar fin anticipado
         vivos = self._alive_players()
         if len(vivos) <= 1:
             self._end_game()
@@ -473,7 +454,6 @@ class GameGUI:
             self._end_game()
             return
 
-        # elegir jugador vivo al azar
         idx = random.choice([i for i,p in enumerate(self.players) if p.is_alive()])
         self.current_player = self.players[idx]
         self.lbl_turn.config(text=f"Turno: {self.turn_index} / {self.num_turns}")
@@ -497,7 +477,7 @@ class GameGUI:
             messagebox.showinfo("Info", "Este jugador está fuera de combate.")
             return
 
-        # listar habilidades
+
         keys = list(self.current_player.skills.keys())
         if not keys:
             messagebox.showinfo("Info", "No tiene habilidades.")
@@ -529,7 +509,7 @@ class GameGUI:
         if not skill:
             return
 
-        # decidir si requiere target/aoe/ally/self según nombre
+
         if skill in ("Meteor",):
             targets = self._choose_target_gui(allow_self=False, multiple=True)
         elif skill in ("Blessing",):
@@ -553,7 +533,7 @@ class GameGUI:
         self._after_action()
 
     def _after_action(self):
-        # actualizar efectos de todos al final del turno
+
         for p in self.players:
             if p.is_alive():
                 p.end_turn_update(log_fn=self._log)
@@ -574,9 +554,6 @@ class GameGUI:
         messagebox.showinfo("Fin de la partida", f"Ganador: {ganador.nombre} (HP: {ganador.hp})")
         self.root.quit()
 
-# ------------------------------
-# main
-# ------------------------------
 def main():
     root = tk.Tk()
     app = GameGUI(root)
